@@ -1,0 +1,16 @@
+{
+  "name": "bot-antidelete",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc.9",
+    "pino": "^10.1.1",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
