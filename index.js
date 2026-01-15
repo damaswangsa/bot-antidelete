@@ -1,3 +1,4 @@
+require('dotenv').config();
 let botActive = true; // Defaultnya bot menyala
 
 const { 
@@ -55,7 +56,7 @@ async function connectToWhatsApp() {
         try {
             const msg = m.messages[0];
                 if (!msg.message || msg.key.fromMe) return; // Mengabaikan pesan dari bot sendiri
-
+                const id = msg.key.id;
                 const from = msg.key.remoteJid;
                 const sender = msg.key.participant || msg.key.remoteJid;
                 const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
@@ -63,7 +64,7 @@ async function connectToWhatsApp() {
                 // Fungsi untuk cek apakah sender adalah admin
                 const groupMetadata = from.endsWith('@g.us') ? await sock.groupMetadata(from) : null;
                 const isAdmins = groupMetadata ? groupMetadata.participants.find(p => p.id === sender)?.admin : null;
-                const isOwner = sender.includes('628xxx'); // GANTI dengan nomor WhatsApp kamu
+                const isOwner = sender.includes(process.env.OWNER_NUMBER);
 
                 if (body === '!bot off') {
                     if (isAdmins || isOwner) {
