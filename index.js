@@ -164,18 +164,23 @@ async function connectToWhatsApp() {
         for (const update of updates) {
             if (update.update.message === null) { 
                 const id = update.key.id;
-                const chatJid = update.key.remoteJid;
+
                 if (storeMessage.has(id)) {
-                    // Cek apakah grup ini ada di daftar "OFF"
-                    const isMuted = statusGrup.get(deletedMsg.from) === false;
+                    // 1. Ambil data pesan dulu agar variabel deletedMsg tersedia
+                    const deletedMsg = storeMessage.get(id);
+                    const chatJid = update.key.remoteJid;
+
+                    // 2. Sekarang cek status ON/OFF grup
+                    // Kita pakai string 'false' karena Map dari JSON seringkali menyimpan boolean sebagai string
+                    const isMuted = statusGrup.get(chatJid) === false || statusGrup.get(chatJid) === 'false';
 
                     if (isMuted) {
-                        console.log(`Pesan dihapus di ${deletedMsg.from}, tapi bot sedang OFF di grup ini.`);
-                        continue; 
+                        console.log(`[SKIP] Pesan dihapus di ${chatJid}, tapi bot sedang OFF.`);
+                        continue; // Lanjut ke pesan berikutnya
                     }
-                    const deletedMsg = storeMessage.get(id);
-                    const pelakunya = deletedMsg.sender.split('@')[0];
 
+                    // 3. Jika tidak OFF, baru proses kirim pesan
+                    const pelakunya = deletedMsg.sender.split('@')[0];
                     const intro = `*Waduh ada yang ngehapus pesan 🥶*\nPelaku: @${pelakunya}\n`;
 
                     if (deletedMsg.type === 'text') {
@@ -187,19 +192,14 @@ async function connectToWhatsApp() {
                         if (fs.existsSync(deletedMsg.path)) {
                             await sock.sendMessage(deletedMsg.from, { 
                                 image: fs.readFileSync(deletedMsg.path),
-                                caption: `${intro}Isi: (Lihat Gambar)${deletedMsg.caption ? `\nCaption asli: ${deletedMsg.caption}` : ''}`,
+                                caption: `${intro}Isi: (Gambar)${deletedMsg.caption ? `\nCaption: ${deletedMsg.caption}` : ''}`,
                                 mentions: [deletedMsg.sender]
                             });
                         }
                     } else if (deletedMsg.type === 'sticker') {
-                        await sock.sendMessage(deletedMsg.from, { 
-                            text: `${intro}Isi: (Stiker di bawah)`,
-                            mentions: [deletedMsg.sender]
-                        });
                         if (fs.existsSync(deletedMsg.path)) {
-                            await sock.sendMessage(deletedMsg.from, { 
-                                sticker: fs.readFileSync(deletedMsg.path) 
-                            });
+                            await sock.sendMessage(deletedMsg.from, { text: `${intro}Isi: (Stiker di bawah)`, mentions: [deletedMsg.sender] });
+                            await sock.sendMessage(deletedMsg.from, { sticker: fs.readFileSync(deletedMsg.path) });
                         }
                     }
                 }
