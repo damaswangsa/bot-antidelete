@@ -83,6 +83,12 @@ async function connectToWhatsApp() {
                         await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
                     }
                 }
+                if (body === '!cek') {
+                await sock.sendMessage(from, { 
+                    text: `User: ${sender}\nIs Owner: ${isOwner}\nIs Admin: ${isAdmins}` 
+                });
+               }
+
             const isText = msg.message.conversation || msg.message.extendedTextMessage;
             const isImage = msg.message.imageMessage;
             const isSticker = msg.message.stickerMessage;
