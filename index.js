@@ -1,3 +1,6 @@
+require('dotenv').config();
+let botActive = true; // Defaultnya bot menyala
+
 const { 
     default: makeWASocket, 
     useMultiFileAuthState, 
@@ -52,12 +55,34 @@ async function connectToWhatsApp() {
     sock.ev.on('messages.upsert', async m => {
         try {
             const msg = m.messages[0];
-            if (!msg.message || msg.key.fromMe) return;
+                if (!msg.message || msg.key.fromMe) return; // Mengabaikan pesan dari bot sendiri
+                const id = msg.key.id;
+                const from = msg.key.remoteJid;
+                const sender = msg.key.participant || msg.key.remoteJid;
+                const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
 
-            const id = msg.key.id;
-            const sender = msg.key.participant || msg.key.remoteJid;
-            const from = msg.key.remoteJid;
+                // Fungsi untuk cek apakah sender adalah admin
+                const groupMetadata = from.endsWith('@g.us') ? await sock.groupMetadata(from) : null;
+                const isAdmins = groupMetadata ? groupMetadata.participants.find(p => p.id === sender)?.admin : null;
+                const isOwner = sender.includes(process.env.OWNER_NUMBER);
 
+                if (body === '!bot off') {
+                    if (isAdmins || isOwner) {
+                        botActive = false;
+                        await sock.sendMessage(from, { text: "❌ Mode OFF" });
+                    } else {
+                        await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
+                    }
+                }
+
+                if (body === '!bot on') {
+                    if (isAdmins || isOwner) {
+                        botActive = true;
+                        await sock.sendMessage(from, { text: "✅ Mode ON" });
+                    } else {
+                        await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
+                    }
+                }
             const isText = msg.message.conversation || msg.message.extendedTextMessage;
             const isImage = msg.message.imageMessage;
             const isSticker = msg.message.stickerMessage;
@@ -119,6 +144,10 @@ async function connectToWhatsApp() {
             if (update.update.message === null) { 
                 const id = update.key.id;
                 if (storeMessage.has(id)) {
+                    if (!botActive) {
+                    console.log("Pesan dihapus terdeteksi, tapi bot sedang OFF.");
+                    return; // Berhenti di sini, tidak lanjut mengirim pesan
+                    }
                     const deletedMsg = storeMessage.get(id);
                     const pelakunya = deletedMsg.sender.split('@')[0];
 
