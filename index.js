@@ -1,5 +1,24 @@
 require('dotenv').config();
 const statusGrup = new Map();
+const STATUS_FILE = './status_grup.json';
+
+// Fungsi memuat status dari file
+function loadStatus() {
+    if (fs.existsSync(STATUS_FILE)) {
+        const data = JSON.parse(fs.readFileSync(STATUS_FILE));
+        return new Map(Object.entries(data));
+    }
+    return new Map();
+}
+
+// Fungsi menyimpan status ke file
+function saveStatus(map) {
+    const obj = Object.fromEntries(map);
+    fs.writeFileSync(STATUS_FILE, JSON.stringify(obj));
+}
+
+// Inisialisasi Map dengan data dari file
+const statusGrup = loadStatus();
 
 const { 
     default: makeWASocket, 
@@ -69,18 +88,16 @@ async function connectToWhatsApp() {
                 if (body === '!bot off') {
                     if (isAdmins || isOwner) {
                         statusGrup.set(from, false);
-                        return await sock.sendMessage(from, { text: "❌ Mode OFF" });
-                    } else {
-                        return await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
+                        saveStatus(statusGrup); // Simpan permanen
+                        return await sock.sendMessage(from, { text: "❌ Bot dinonaktifkan di grup ini." });
                     }
                 }
 
                 if (body === '!bot on') {
                     if (isAdmins || isOwner) {
-                        statusGrup.delete(from);              
-                        return await sock.sendMessage(from, { text: "✅ Mode ON" });
-                    } else {
-                        return await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
+                        statusGrup.delete(from); // Hapus dari daftar mute
+                        saveStatus(statusGrup); // Simpan permanen
+                        return await sock.sendMessage(from, { text: "✅ Bot diaktifkan kembali!" });
                     }
                 }
                 if (body === '!cek') {
