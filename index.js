@@ -1,5 +1,5 @@
 require('dotenv').config();
-let botActive = true; // Defaultnya bot menyala
+const statusGrup = new Map();
 
 const { 
     default: makeWASocket, 
@@ -64,23 +64,23 @@ async function connectToWhatsApp() {
                 // Fungsi untuk cek apakah sender adalah admin
                 const groupMetadata = from.endsWith('@g.us') ? await sock.groupMetadata(from) : null;
                 const isAdmins = groupMetadata ? groupMetadata.participants.find(p => p.id === sender)?.admin : null;
-                const isOwner = sender.includes(process.env.OWNER_NUMBER);
+                const isOwner = sender.split('@')[0] === sock.user.id.split(':')[0] || sender.includes(process.env.OWNER_NUMBER);
 
                 if (body === '!bot off') {
                     if (isAdmins || isOwner) {
-                        botActive = false;
-                        await sock.sendMessage(from, { text: "❌ Mode OFF" });
+                        statusGrup.set(from, false);
+                        return await sock.sendMessage(from, { text: "❌ Mode OFF" });
                     } else {
-                        await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
+                        return await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
                     }
                 }
 
                 if (body === '!bot on') {
                     if (isAdmins || isOwner) {
-                        botActive = true;
-                        await sock.sendMessage(from, { text: "✅ Mode ON" });
+                        statusGrup.delete(from);              
+                        return await sock.sendMessage(from, { text: "✅ Mode ON" });
                     } else {
-                        await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
+                        return await sock.sendMessage(from, { text: "🚫 You do not have permission to do this" });
                     }
                 }
                 if (body === '!cek') {
@@ -150,9 +150,12 @@ async function connectToWhatsApp() {
             if (update.update.message === null) { 
                 const id = update.key.id;
                 if (storeMessage.has(id)) {
-                    if (!botActive) {
-                    console.log("Pesan dihapus terdeteksi, tapi bot sedang OFF.");
-                    return; // Berhenti di sini, tidak lanjut mengirim pesan
+                    // Cek apakah grup ini ada di daftar "OFF"
+                    const isMuted = statusGrup.get(deletedMsg.from) === false;
+
+                    if (isMuted) {
+                        console.log(`Pesan dihapus di ${deletedMsg.from}, tapi bot sedang OFF di grup ini.`);
+                        return; 
                     }
                     const deletedMsg = storeMessage.get(id);
                     const pelakunya = deletedMsg.sender.split('@')[0];
