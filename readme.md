@@ -42,6 +42,10 @@ pm2 start index.js --name "wa-antidelete-bot"
 pm2 save
 pm2 startup
 ```
+C. Admin Control 
+```
+Only Group Admins or the Bot Owner can use `!bot on` and `!bot off` commands.
+```
 
 ## Session Security (Important)
 Do NOT upload the `auth_info_baileys` folder to any public repository, as it contains your login credentials.  
@@ -56,6 +60,8 @@ temp/
 - Baileys (WhatsApp Web API)
 - Node.js (JavaScript runtime)
 - PM2 (Process manager to keep the bot online)
+
+
 
 ## Disclaimer
 Use this bot responsibly for transparency purposes. Any misuse involving privacy violations is the sole responsibility of the user.
