@@ -17,8 +17,6 @@ function saveStatus(map) {
     fs.writeFileSync(STATUS_FILE, JSON.stringify(obj));
 }
 
-// Inisialisasi Map dengan data dari file
-const statusGrup = loadStatus();
 
 const { 
     default: makeWASocket, 
