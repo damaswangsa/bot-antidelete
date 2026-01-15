@@ -149,13 +149,14 @@ async function connectToWhatsApp() {
         for (const update of updates) {
             if (update.update.message === null) { 
                 const id = update.key.id;
+                const chatJid = update.key.remoteJid;
                 if (storeMessage.has(id)) {
                     // Cek apakah grup ini ada di daftar "OFF"
                     const isMuted = statusGrup.get(deletedMsg.from) === false;
 
                     if (isMuted) {
                         console.log(`Pesan dihapus di ${deletedMsg.from}, tapi bot sedang OFF di grup ini.`);
-                        return; 
+                        continue; 
                     }
                     const deletedMsg = storeMessage.get(id);
                     const pelakunya = deletedMsg.sender.split('@')[0];
